@@ -1,0 +1,16 @@
+.idea
+*.iws
+*.iml
+*.ipr
+
+target/**
+!target/smart_energy_device_simulator-1.0-SNAPSHOT-jar-with-dependencies.jar
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache

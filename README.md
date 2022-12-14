@@ -1,4 +1,4 @@
-# DS2022_30441_Keresztes_Beata_Assignment_2
+# DS2022_30441_Keresztes_Beata_Assignment_3
 
 ## Deployment steps on Azure
 
@@ -80,4 +80,3 @@ Example:
 > docker cd frontend
 > 
 > docker compose down
-# DS2022_30441_Keresztes_Beata_Assignment_3

@@ -1,0 +1,58 @@
+version: '3'
+
+services:
+        
+  mysql:
+    image: containerregistrybeatakeresztes30441.azurecr.io/mysql:latest
+    container_name: mysql
+    build:
+      context: mysql
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: 'root'
+      MYSQL_DATABASE: 'energy-db'
+    deploy:
+      resources:
+        limits:
+          cpus: '0.10'
+          memory: 1G
+        
+  rabbitmq:
+    image: containerregistrybeatakeresztes30441.azurecr.io/rabbitmq:3-management
+    container_name: rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: always
+    build:
+      context: rabbitmq
+      dockerfile: Dockerfile
+    deploy:
+      resources:
+        limits:
+          cpus: '0.20'
+          memory: 1G
+        
+  backend:
+    image: containerregistrybeatakeresztes30441.azurecr.io/tomcat:latest
+    container_name: backend
+    build:
+      context: energy_utility_platform/energy_data_platform
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+      - rabbitmq
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 1G

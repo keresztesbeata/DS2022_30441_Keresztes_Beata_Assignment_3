@@ -1,0 +1,86 @@
+# Docker
+# Build and push an image to Azure Container Registry
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+- prod
+
+resources:
+- repo: self
+
+variables:
+  # Container registry service connection established during pipeline creation
+  dockerRegistryServiceConnection: '2020599e-2ca1-4fcc-a79f-4b2624893a06'
+  imageRepository: 'beatakeresztes30441backend'
+  containerRegistry: 'containerregistrybeatakeresztes30441.azurecr.io'
+  dockerfilePath: '${Build.SourcesDirectory}/Dockerfile'
+  tag: '$(Build.BuildId)'
+
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
+  agentPoolName: 'local'
+
+stages:
+- stage: Build
+  displayName: Build and push stage
+  jobs:
+  - job: CodeCoverage
+    displayName: Code Coverage
+    pool:
+      name: $(agentPoolName)
+      vmImage: $(vmImageName)
+    steps:
+      - task: Maven@3
+        inputs:
+          mavenPomFile: "energy_utility_platform/energy_data_platform/pom.xml"
+          publishJUnitResults: true
+          testResultsFiles: '**/surefire-reports/TEST-*.xml'
+          codeCoverageToolOption: 'JaCoCo'
+          codeCoverageFailIfEmpty: true
+          javaHomeOption: 'Path'
+          jdkDirectory: '/usr/lib/jvm/java-17-openjdk-amd64'
+          jdkVersionOption: 1.17
+          mavenVersionOption: 'Path'
+          mavenDirectory: /opt/maven
+          mavenSetM2Home: true
+          mavenAuthenticateFeed: false
+          effectivePomSkip: false
+          sonarQubeRunAnalysis: false
+          checkStyleRunAnalysis: true
+
+      - task: Maven@3
+        displayName: "Maven Test"
+        inputs:
+          mavenPomFile: "energy_utility_platform/energy_data_platform/pom.xml"
+          goals: "test"
+      - task: PublishTestResults@2
+        displayName: "Publish test results"
+        inputs:
+          testResultsFormat: "JUnit"
+          mergeTestResults: true # Optional
+      - task: PublishCodeCoverageResults@1
+        displayName: "Publish publish code coverage"
+        inputs:
+          summaryFileLocation: $(System.DefaultWorkingDirectory)/target/site/jacoco/jacoco.xml
+          pathToSources: $(System.DefaultWorkingDirectory)/src/main/java/
+  - job: Build
+    displayName: Build
+    pool:
+      name: $(agentPoolName)
+      vmImage: $(vmImageName)
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        command: buildAndPush
+        repository: $(imageRepository)
+        dockerfile: $(dockerfilePath)
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          latest
+          $(tag)
+    - task: CopyFiles@2
+      inputs:
+        SourceFolder: ''
+        Contents: 'docker-compose.yml'
+        TargetFolder: '$(Agent.WorkFolder)'

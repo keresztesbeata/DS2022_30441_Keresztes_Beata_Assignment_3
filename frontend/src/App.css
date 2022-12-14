@@ -1,0 +1,185 @@
+.background-container {
+    height: 100vh;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.white-background {
+    background-color: white;
+    border-radius: 5px;
+}
+
+.page-background {
+    background-image: linear-gradient(#103d3c, #256d79);
+}
+
+.client-dashboard-bg {
+    height: 100vh;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-image: url("images/waves.jpg");
+    resize: both;
+}
+
+.admin-dashboard-bg {
+    height: 100vh;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-image: url("images/blocks.jpg");
+    resize: both;
+}
+
+.welcome-bg {
+    height: 100vh;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-image: url("images/welcome.jpg");
+    resize: both;
+}
+
+.background-header {
+    height: 300px;
+    width: 100vw;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.transparent-background {
+    background-color: rgb(9, 9, 9);
+    opacity: .65;
+    padding: 50px;
+    border-radius: 5px;
+}
+
+.background-container-error {
+    background-color: white;
+    height: 100vh;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.error-background {
+    border-color: darkred;
+    padding: 50px;
+    border-radius: 5px;
+}
+
+.info-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: auto;
+    border-radius: 5px;
+    padding: 20px;
+    width: 320px;
+}
+
+.page-container {
+    width: 100%;
+    display: grid;
+    column-count: 2;
+}
+
+.page-container > :nth-child(1) {
+    width: 20%;
+}
+
+.page-container > :nth-child(2) {
+    margin-left: 22%;
+    column-width: fill-available;
+}
+
+.side-nav {
+    background-color: #282c34;
+    color: white;
+    height: 100vh;
+    position: fixed;
+}
+
+.side-nav a {
+    color: white;
+    padding-left: 10%;
+}
+
+.side-nav a:hover {
+    color: #22af9c;
+}
+
+.side-nav a:active {
+    color: #137769;
+}
+
+.side-nav p {
+    font-size: 20px;
+    padding-left: 10%;
+    padding-top: 20%;
+    padding-bottom: 20%;
+}
+
+.table-container {
+    margin: 2%;
+}
+
+.page-content {
+    margin: 2%;
+}
+
+.error-modal {
+    background-color: #c75c5c;
+}
+
+.success-modal {
+    background-color: #5beec6;
+}
+
+.info-modal {
+    background-color: #5f89e7;
+}
+
+.warning-modal {
+    background-color: #e1a638;
+}
+
+.custom-link {
+    color: #22af9c;
+    font-size: 30px;
+    text-decoration: none;
+    text-align: center;
+    display: inline-block;
+    padding: 2%;
+}
+
+.custom-link:hover {
+    color: #95d3cb;
+    border-radius: 10px;
+    font-size: 32px;
+    text-decoration: none;
+    text-align: center;
+    display: inline-block;
+    padding: 2%;
+}
+
+.custom-link:active {
+    color: #0e443d;
+    font-size: 30px;
+    text-decoration: none;
+    text-align: center;
+    display: inline-block;
+    padding: 2%;
+}
+
+.title {
+    color: #b4ece5;
+    padding-bottom: 15%;
+}
+
+.logo {
+    max-width: 50%;
+    max-height: 50%;
+    margin: auto;
+}
+
+.plot-container {
+    margin: auto;
+    width: 100%;
+}

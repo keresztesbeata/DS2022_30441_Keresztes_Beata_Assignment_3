@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+
+  frontend:
+    image: containerregistrybeatakeresztes30441.azurecr.io/react:latest
+    container_name: frontend
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_HOST_IP_ADDRESS=20.79.245.9
+    deploy:
+      resources:
+        limits:
+          cpus: '0.10'
+          memory: 1G

@@ -1,4 +1,4 @@
-const HOST_IP = process.env.REACT_APP_HOST_IP_ADDRESS;
+const HOST_IP = process.env.REACT_APP_HOST_IP_ADDRESS !== undefined? process.env.REACT_APP_HOST_IP_ADDRESS:'localhost';
 
 export function getServerAddress() {
     return "http://"+HOST_IP+":8080";

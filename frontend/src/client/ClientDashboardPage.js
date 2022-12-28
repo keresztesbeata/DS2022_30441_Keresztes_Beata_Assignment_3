@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {ClientNavigationMenu} from "./components/ClientNavigationMenu";
-import {ChatComponent} from "../chat/ChatComponent";
+import {ClientChatComponent} from "../chat/ClientChatComponent";
 
 export class ClientDashboardPage extends Component {
     render() {
@@ -8,7 +8,7 @@ export class ClientDashboardPage extends Component {
             <div className="page-container d-flex client-dashboard-bg">
                 <ClientNavigationMenu/>
                 <div className={"mt-4"}>
-                    <ChatComponent/>
+                    <ClientChatComponent/>
                 </div>
             </div>
         );

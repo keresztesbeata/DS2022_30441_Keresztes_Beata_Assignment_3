@@ -1,56 +1,106 @@
 const grpc = require("grpc");
 const protoLoader = require("@grpc/proto-loader");
 
-const PROTO_PATH = "chat.proto";
+const PROTO_PATH = "src/chat.proto";
 const SERVER_URI = "0.0.0.0:9090";
 
-const usersInChat = [];
-const observers = [];
+let clients = [];
+let admin = null;
+let clientStreams = new Map([]);
+let adminStreams = new Map([]);
+let joinNotifications = null;
+
+const ADMIN = "ADMIN";
+
+let id = 1;
 
 const packageDefinition = protoLoader.loadSync(PROTO_PATH);
 const protoDescriptor = grpc.loadPackageDefinition(packageDefinition);
 
+const notifyAdmin = (call, callback) => {
+    // subscribe to events about new clients requesting a chat with the admin
+    admin = call.request.name;
+    joinNotifications = {call};
+    console.log(`Subscribed to chat requests.`);
+}
+
 const join = (call, callback) => {
     const user = call.request;
 
-    // check username already exists.
-    const userExist = usersInChat.find((_user) => _user.name === user.name);
-    if (!userExist) {
-        usersInChat.push(user);
-        callback(null, {
-            error: 0,
-            msg: "Success",
-        });
-    } else {
-        callback(null, { error: 1, msg: "User already exist." });
+    if(clients.find(client => client.name === user.name) === undefined) {
+        clients.push(user);
     }
+    console.log(`User ${user.name} joined the chat!`);
+
+    // notify admin about the new client starting the chat
+    if (joinNotifications !== null) {
+        joinNotifications.call.write(user);
+        console.log(`New chat request from client ${user.name}`);
+    }else{
+        console.log('Admin not available.')
+    }
+
+    callback(null, {
+        error: 0,
+        msg: "Success",
+    });
 };
 
-const getAllUsers = (call, callback) => {
-    callback(null, { users: usersInChat });
+const getAllClients = (call, callback) => {
+    console.log(`Retrieve all users in chat: ${clients.length}`);
+    console.log(clients);
+    callback(null, {users: clients});
 };
 
 const receiveMsg = (call, callback) => {
-    observers.push({
-        call,
-    });
+    const client = call.request.user;
+
+    if (call.request.admin === 1) {
+        console.log('Register Admin for receiving messages');
+        adminStreams.set(client, {call});
+    } else {
+        console.log(`Register user ${client} for receiving messages`);
+        clientStreams.set(client, {call});
+    }
 };
 
 const sendMsg = (call, callback) => {
     const chatObj = call.request;
-    observers.forEach((observer) => {
-        observer.call.write(chatObj);
-    });
+
+    console.log(`Sending message ${chatObj.msg} from ${chatObj.from} to ${chatObj.to}`);
+
+    // set id for msg
+    chatObj.id = id;
+    id = id + 1;
+
+    let client = (chatObj.to === ADMIN) ? chatObj.from : chatObj.to;
+
+    clientStreams.get(client).call.write(chatObj);
+    if(adminStreams.get(client) !== undefined) {
+        adminStreams.get(client).call.write(chatObj);
+    }
+
     callback(null, {});
 };
 
 const server = new grpc.Server();
 
+const leave = (call, callback) => {
+    const user = call.request.user;
+    console.log(`User ${user} has left the chat!`);
+
+    clients = clients.filter(client => client.name !== user.name);
+    clientStreams.delete(user.name);
+    adminStreams.delete(user.name);
+}
+
 server.addService(protoDescriptor.ChatService.service, {
     join,
+    notifyAdmin,
     sendMsg,
-    getAllUsers,
+    getAllClients,
     receiveMsg,
+    leave
 });
 
 server.bind(SERVER_URI, grpc.ServerCredentials.createInsecure());

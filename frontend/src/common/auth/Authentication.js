@@ -95,7 +95,7 @@ export function Logout() {
 
 /**
  * Verify the authorization of the user before returning the requested resource.
- * In case the user lacks the authroization, it returns an error page with a corresponding error message
+ * In case the user lacks the authorization, it returns an error page with a corresponding error message
  * @param component
  * @param authority
  * @returns {JSX.Element}

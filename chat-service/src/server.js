@@ -84,9 +84,11 @@ const sendMsg = (call, callback) => {
 
     console.log(`Sending message ${chatObj.msg} from ${chatObj.from} to ${chatObj.to}`);
 
-    // set id for msg
-    chatObj.id = id;
-    id = id + 1;
+    if (chatObj.sent === 1 && chatObj.id === undefined) {
+        // set id for msg
+        chatObj.id = id;
+        id = id + 1;
+    }
 
     let client = (chatObj.to === ADMIN) ? chatObj.from : chatObj.to;
 
@@ -94,10 +96,19 @@ const sendMsg = (call, callback) => {
     if (adminStreams.get(client) !== undefined) {
         adminStreams.get(client).call.write(chatObj);
     }
-    // append msg to history
-    let history = chatHistory.get(client);
-    history.push(chatObj);
-    chatHistory.set(client, history);
+
+    if (chatObj.sent === 1) {
+        // append msg to history
+        let history = chatHistory.get(client);
+
+        if (chatObj.read === 1) {
+            history = history.filter(m => m.id !== chatObj.id);
+        }
+
+        history.push(chatObj);
+        history.sort((m1, m2) => m1.id === m2.id ? 0 : m1.id > m2.id ? 1 : -1);
+        chatHistory.set(client, history);
+    }
 
     callback(null, {});
 };

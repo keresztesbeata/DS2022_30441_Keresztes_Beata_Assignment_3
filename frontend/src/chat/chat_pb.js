@@ -233,7 +233,9 @@ proto.ChatMessage.toObject = function(includeInstance, msg) {
     from: jspb.Message.getFieldWithDefault(msg, 2, ""),
     to: jspb.Message.getFieldWithDefault(msg, 3, ""),
     msg: jspb.Message.getFieldWithDefault(msg, 4, ""),
-    datetime: jspb.Message.getFieldWithDefault(msg, 5, "")
+    datetime: jspb.Message.getFieldWithDefault(msg, 5, ""),
+    sent: jspb.Message.getFieldWithDefault(msg, 6, 0),
+    read: jspb.Message.getFieldWithDefault(msg, 7, 0)
   };
 
   if (includeInstance) {
@@ -289,6 +291,14 @@ proto.ChatMessage.deserializeBinaryFromReader = function(msg, reader) {
     case 5:
       var value = /** @type {string} */ (reader.readString());
       msg.setDatetime(value);
+      break;
+    case 6:
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setSent(value);
+      break;
+    case 7:
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setRead(value);
       break;
     default:
       reader.skipField();
@@ -351,6 +361,20 @@ proto.ChatMessage.serializeBinaryToWriter = function(message, writer) {
   if (f.length > 0) {
     writer.writeString(
       5,
+      f
+    );
+  }
+  f = message.getSent();
+  if (f !== 0) {
+    writer.writeInt32(
+      6,
+      f
+    );
+  }
+  f = message.getRead();
+  if (f !== 0) {
+    writer.writeInt32(
+      7,
       f
     );
   }
@@ -444,6 +468,42 @@ proto.ChatMessage.prototype.getDatetime = function() {
  */
 proto.ChatMessage.prototype.setDatetime = function(value) {
   return jspb.Message.setProto3StringField(this, 5, value);
+};
+
+
+/**
+ * optional int32 sent = 6;
+ * @return {number}
+ */
+proto.ChatMessage.prototype.getSent = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 6, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.ChatMessage} returns this
+ */
+proto.ChatMessage.prototype.setSent = function(value) {
+  return jspb.Message.setProto3IntField(this, 6, value);
+};
+
+
+/**
+ * optional int32 read = 7;
+ * @return {number}
+ */
+proto.ChatMessage.prototype.getRead = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 7, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.ChatMessage} returns this
+ */
+proto.ChatMessage.prototype.setRead = function(value) {
+  return jspb.Message.setProto3IntField(this, 7, value);
 };
 
 

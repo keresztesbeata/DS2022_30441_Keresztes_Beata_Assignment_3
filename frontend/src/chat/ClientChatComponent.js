@@ -9,6 +9,7 @@ export const JOINED = "joined_chat";
 
 export const ClientChatComponent = () => {
     const [messages, setMessages] = useState([]);
+    const [isTyping, setIsTyping] = useState(false);
     const [joined, setJoined] = useState(() => sessionStorage.getItem(JOINED) !== null);
     const username = sessionStorage.getItem(USERNAME);
 
@@ -23,8 +24,10 @@ export const ClientChatComponent = () => {
         const to = chatMessage.getTo();
         const msg = chatMessage.getMsg();
         const datetime = chatMessage.getDatetime();
+        const read = chatMessage.getRead();
+        const sent = chatMessage.getSent();
 
-        return {from: from, to: to, msg: msg, datetime: datetime};
+        return {from: from, to: to, msg: msg, datetime: datetime, read: read, sent: sent};
     }
 
     const listenToMessages = () => {
@@ -34,9 +37,16 @@ export const ClientChatComponent = () => {
 
         let chatStream = client.receiveMsg(strRq, {});
         chatStream.on("data", (response) => {
-            setMessages(prevState => [...prevState,mapMessage(response)]);
-            console.log(messages);
-            console.log(`Received message ${response.getMsg()} from ${response.getFrom()}`)
+            if (response.getSent() === 1) {
+                setMessages(prevState => [...prevState, mapMessage(response)]);
+                console.log(`Received message ${response.getMsg()} from ${response.getFrom()}`);
+            } else if (response.getFrom() !== username) {
+                console.log('Admin is typing!');
+                setIsTyping(true);
+                setTimeout(function () {
+                    setIsTyping(false);
+                }, 1000);
+            }
         });
 
         chatStream.on("status", function (status) {
@@ -80,12 +90,28 @@ export const ClientChatComponent = () => {
         msg.setMsg(message);
         msg.setFrom(username);
         msg.setTo(ADMIN_ROLE);
+        msg.setRead(0);
+        msg.setSent(1);
         const sentTime = new Date().toLocaleString();
         msg.setDatetime(sentTime);
 
         client.sendMsg(msg, null, (err, response) => {
-            console.log(response);
             console.log(`Sent message ${message}!`);
+        });
+    }
+
+    const onTyping = () => {
+        const msg = new ChatMessage();
+        msg.setMsg("...");
+        msg.setFrom(username);
+        msg.setTo(ADMIN_ROLE);
+        msg.setRead(0);
+        msg.setSent(0);
+        const sentTime = new Date().toLocaleString();
+        msg.setDatetime(sentTime);
+
+        client.sendMsg(msg, null, (err, response) => {
+            console.log(`User ${username} typing response to admin!`);
         });
     }
 
@@ -102,14 +128,27 @@ export const ClientChatComponent = () => {
         setJoined(false);
     }
 
+    const getChatHistory = () => {
+        let req = new User();
+        req.setName(username);
+        client.getHistory(req, {}, (err, response) => {
+            console.log(`Retrieved chat history for user ${username}: ${response.getHistoryList().length} messages`);
+            const history = messages.filter(msg => msg.from !== username || msg.to !== username);
+            setMessages(history);
+            response.getHistoryList().forEach(msg => setMessages(prevState => [...prevState, mapMessage(msg)]));
+        });
+    }
+
     return (
         joined ?
             <SimpleChatComponent
                 user={"Admin"}
-                messages={
-                messages}
+                messages={messages}
+                isTyping={isTyping}
                 onSendMessage={onSendMessage}
-                onShowCallback={() => {}}/>
+                onShowCallback={getChatHistory}
+                onTyping={onTyping}
+            />
             :
             <Button onClick={onJoin}>Join Chat</Button>
     )

@@ -41,11 +41,17 @@ export const SimpleChatComponent = (props) => {
                     <Card.Title>Chat with {props.user}</Card.Title>
                 </Card.Header>
                 <Card.Body className={"messages-container"}>
-                    {props.messages.map(m => displaySingleMessage(m))}
+                    <div>
+                        {props.messages.map(m => displaySingleMessage(m))}
+                        <p>{props.isTyping ? `${props.user} is typing...` : ''}</p>
+                    </div>
                 </Card.Body>
                 <Card.Footer>
                     <InputGroup>
-                        <FormControl type={"text"} onChange={e => setDraftMessage(e.target.value)}
+                        <FormControl type={"text"} onChange={e => {
+                            setDraftMessage(e.target.value);
+                            props.onTyping();
+                        }}
                                      value={draftMessage}/>
                         <Button onClick={(e) => {
                             props.onSendMessage(draftMessage);

@@ -6,6 +6,8 @@ message ChatMessage {
     string to = 3;
     string msg = 4;
     string datetime = 5;
+    int32 sent = 6;
+    int32 read = 7;
 }
 
 message User {

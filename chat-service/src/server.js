@@ -22,7 +22,7 @@ const notifyAdmin = (call, callback) => {
     // subscribe to events about new clients requesting a chat with the admin
     admin = call.request.name;
     joinNotifications = {call};
-    console.log(`Subscribed to chat requests.`);
+    console.log(`Subscribed to join requests.`);
 }
 
 const join = (call, callback) => {

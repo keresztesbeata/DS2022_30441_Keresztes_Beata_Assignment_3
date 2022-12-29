@@ -27,29 +27,31 @@ export const AdminChatComponent = () => {
     }
 
     const listenToMessages = (user) => {
-        console.log(`Subscribing to message stream of user ${user}.`)
         if(users.find(u => u === user)) {
             console.log(`Already subscribed to message stream of user ${user}`);
-            return;
+        }else {
+            setUsers(prevState => [...prevState, user]);
+            console.log(`Subscribing to message stream of user ${user}.`)
+
+            const strRq = new ReceiveMsgRequest();
+            strRq.setUser(user);
+            strRq.setAdmin(1);
+
+            let chatStream = client.receiveMsg(strRq, {});
+            chatStream.on("data", (response) => {
+                setMessages(prevState => [...prevState, mapMessage(response)]);
+                console.log(`Received message ${response.getMsg()} from ${response.getFrom()}`)
+            });
+
+            chatStream.on("status", function (status) {
+                console.log(status.code, status.details, status.metadata);
+            });
+
+            chatStream.on("end", () => {
+                console.log("Stream ended.");
+                chatStream.cancel();
+            });
         }
-        const strRq = new ReceiveMsgRequest();
-        strRq.setUser(user);
-        strRq.setAdmin(1);
-
-        let chatStream = client.receiveMsg(strRq, {});
-        chatStream.on("data", (response) => {
-            setMessages(prevState => [...prevState, mapMessage(response)]);
-            console.log(`Received message ${response.getMsg()} from ${response.getFrom()}`)
-        });
-
-        chatStream.on("status", function (status) {
-            console.log(status.code, status.details, status.metadata);
-        });
-
-        chatStream.on("end", () => {
-            console.log("Stream ended.");
-            chatStream.cancel();
-        });
     }
 
     const onJoin = () => {
@@ -61,22 +63,17 @@ export const AdminChatComponent = () => {
             const user = response.getName();
             // start listening to messages from the new user
             listenToMessages(user);
-            setUsers(prevState => [...prevState, user]);
             console.log(`User ${user} has joined the chat!`);
         });
 
         setJoined(true);
-        client.getAllClients(new Empty(), null, (err, response) => {
-            const users = response.getUsersList();
-            if (users.length > 0) {
-                users.forEach(u => {
-                    listenToMessages(u.getName());
-                });
-                setUsers(users.map(u => u.getName()));
-                console.log("Retrieved clients: " + users);
-            } else {
-                setUsers([]);
-            }
+
+        client.getAllClients(new Empty(), {}, (err, response) => {
+            const usersList = response.getUsersList();
+            usersList.forEach(u => {
+                listenToMessages(u.getName());
+            });
+            console.log("Retrieved clients: " + users);
         });
     }
 
@@ -98,7 +95,8 @@ export const AdminChatComponent = () => {
         let req = new User();
         req.setName(user);
         client.getHistory(req, {}, (err, response) => {
-            console.log(`Retrieved chat history for user ${user}: ${response.getHistoryList().length} messages`)
+            console.log(`Retrieved chat history for user ${user}: ${response.getHistoryList().length} messages`);
+            setMessages(messages.filter(msg => msg.from !== user || msg.to !== user));
             response.getHistoryList().forEach(msg => setMessages(prevState => [...prevState, mapMessage(msg)]));
         });
     }

@@ -197,10 +197,11 @@
     overflow-y: scroll;
 }
 
-.client-response {
+.response-from {
     border-radius: 5px;
-    border: 2px solid #9c8ae7;
-    background-color: #9c8ae7;
+    border: 2px solid #2c80fd;
+    background-color:#2c80fd;
+    color: white;
     width: content-box;
     min-width: 30px;
     max-width: 270px;
@@ -216,11 +217,11 @@
     margin-right: auto;
 }
 
-.admin-response {
+.response-to {
     border-radius: 5px;
-    border: 2px solid #2c80fd;
-    background-color:#2c80fd;
-    color: white;
+    color: black;
+    border: 2px solid #d8dadf;
+    background-color: #d8dadf;
     width: content-box;
     min-width: 30px;
     max-width: 270px;

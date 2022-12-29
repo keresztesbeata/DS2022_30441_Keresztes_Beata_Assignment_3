@@ -1,5 +1,5 @@
 import {Button, Card, FormControl, InputGroup} from "react-bootstrap";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {USERNAME} from "../common/auth/Authentication";
 
 export const SimpleChatComponent = (props) => {
@@ -13,33 +13,41 @@ export const SimpleChatComponent = (props) => {
             parsedDate.getHours() + ":" + parsedDate.getMinutes() + ":" + parsedDate.getSeconds();
     }
 
-    const displaySingleMessage = (msg) => {
-        const detailsStyle = (msg.from === username ? "align-left" : "align-right") + " small-text";
-        const messageStyle = msg.from === username ? "client-response" : "admin-response";
+    const displaySingleMessage = (message) => {
+        const detailsStyle = "align-right small-text";
+        const messageStyle = message.from === username ? "response-from" : "response-to";
 
         return (
-            <div className={messageStyle + " mt-2"} key={msg.id}>
-                <p className={detailsStyle}>{msg.from}</p>
-                <p>{msg.msg}</p>
-                <p className={detailsStyle}>{formatDate(msg.time.toString())}</p>
+            <div className={messageStyle + " mt-2"} key={message.id}>
+                <p className={detailsStyle}>{message.from}</p>
+                <p>{message.msg}</p>
+                <p className={detailsStyle}>{formatDate(message.datetime.toString())}</p>
             </div>
         )
+    }
+
+    const onToggleShow = () => {
+        const visible = show;
+        setShow(!visible);
+        if(visible === false) {
+           // props.onShowCallback();
+        }
     }
 
     return (
         show ?
             <Card className={"chat-container"}>
-                <Card.Header onClick={() => setShow(!show)}>
+                <Card.Header onClick={(e) => onToggleShow()}>
                     <Card.Title>Chat with {props.user}</Card.Title>
                 </Card.Header>
                 <Card.Body className={"messages-container"}>
-                    {props.messages.map(displaySingleMessage)}
+                    {props.messages.map(m => displaySingleMessage(m))}
                 </Card.Body>
                 <Card.Footer>
                     <InputGroup>
                         <FormControl type={"text"} onChange={e => setDraftMessage(e.target.value)}
                                      value={draftMessage}/>
-                        <Button onClick={() => {
+                        <Button onClick={(e) => {
                             props.onSendMessage(draftMessage);
                             setDraftMessage("");
                         }}>Send</Button>
@@ -47,6 +55,6 @@ export const SimpleChatComponent = (props) => {
                 </Card.Footer>
             </Card>
             :
-            <Button onClick={() => setShow(!show)}>Chat with {props.user}</Button>
+            <Button onClick={(e) => onToggleShow()}>Chat with {props.user}</Button>
     )
 }

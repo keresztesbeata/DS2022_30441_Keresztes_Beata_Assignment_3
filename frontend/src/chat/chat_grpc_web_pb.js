@@ -193,6 +193,67 @@ proto.ChatServicePromiseClient.prototype.notifyAdmin =
 /**
  * @const
  * @type {!grpc.web.MethodDescriptor<
+ *   !proto.User,
+ *   !proto.ChatHistory>}
+ */
+const methodDescriptor_ChatService_getHistory = new grpc.web.MethodDescriptor(
+  '/ChatService/getHistory',
+  grpc.web.MethodType.UNARY,
+  proto.User,
+  proto.ChatHistory,
+  /**
+   * @param {!proto.User} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.ChatHistory.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.User} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.ChatHistory)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.ChatHistory>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.ChatServiceClient.prototype.getHistory =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/ChatService/getHistory',
+      request,
+      metadata || {},
+      methodDescriptor_ChatService_getHistory,
+      callback);
+};
+
+
+/**
+ * @param {!proto.User} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.ChatHistory>}
+ *     Promise that resolves to the response
+ */
+proto.ChatServicePromiseClient.prototype.getHistory =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/ChatService/getHistory',
+      request,
+      metadata || {},
+      methodDescriptor_ChatService_getHistory);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
  *   !proto.ChatMessage,
  *   !proto.Empty>}
  */

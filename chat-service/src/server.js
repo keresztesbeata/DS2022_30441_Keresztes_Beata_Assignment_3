@@ -8,6 +8,7 @@ let clients = [];
 let admin = null;
 let clientStreams = new Map([]);
 let adminStreams = new Map([]);
+let chatHistory = new Map([]);
 let joinNotifications = null;
 
 const ADMIN = "ADMIN";
@@ -31,6 +32,7 @@ const join = (call, callback) => {
         clients.push(user);
     }
     console.log(`User ${user.name} joined the chat!`);
+    chatHistory.set(user.name, []);
 
     // notify admin about the new client starting the chat
     if (joinNotifications !== null) {
@@ -52,14 +54,20 @@ const getAllClients = (call, callback) => {
     callback(null, {users: clients});
 };
 
+const getHistory = (call, callback) => {
+    const user = call.request.name;
+    console.log(`Retrieve chat history for user ${user}`);
+    callback(null, {history: chatHistory.get(user)});
+}
+
 const receiveMsg = (call, callback) => {
     const client = call.request.user;
 
     if (call.request.admin === 1) {
-        console.log('Register Admin for receiving messages');
+        console.log('Register Admin for receiving messages from '+client);
         adminStreams.set(client, {call});
     } else {
-        console.log(`Register user ${client} for receiving messages`);
+        console.log(`Register user ${client} for receiving messages from admin`);
         clientStreams.set(client, {call});
     }
 };
@@ -79,6 +87,10 @@ const sendMsg = (call, callback) => {
     if(adminStreams.get(client) !== undefined) {
         adminStreams.get(client).call.write(chatObj);
     }
+    // append msg to history
+    let history = chatHistory.get(client);
+    history.push(chatObj);
+    chatHistory.set(client, history);
 
     callback(null, {});
 };
@@ -97,6 +109,7 @@ const leave = (call, callback) => {
 server.addService(protoDescriptor.ChatService.service, {
     join,
     notifyAdmin,
+    getHistory,
     sendMsg,
     getAllClients,
     receiveMsg,

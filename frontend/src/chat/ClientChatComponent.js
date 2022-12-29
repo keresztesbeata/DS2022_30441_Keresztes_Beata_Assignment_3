@@ -18,6 +18,15 @@ export const ClientChatComponent = () => {
 
     const client = new ChatServiceClient(CHAT_SERVICE_URL, null, null);
 
+    const mapMessage = (chatMessage) => {
+        const from = chatMessage.getFrom();
+        const to = chatMessage.getTo();
+        const msg = chatMessage.getMsg();
+        const datetime = chatMessage.getDatetime();
+
+        return {from: from, to: to, msg: msg, datetime: datetime};
+    }
+
     const listenToMessages = () => {
         const strRq = new ReceiveMsgRequest();
         strRq.setUser(username);
@@ -25,16 +34,9 @@ export const ClientChatComponent = () => {
 
         let chatStream = client.receiveMsg(strRq, {});
         chatStream.on("data", (response) => {
-            const from = response.getFrom();
-            const msg = response.getMsg();
-            const time = response.getTime();
-
-            setMessages(prevState => [...prevState,
-                {from: from, msg: msg, time: time}]);
-
-            if (from !== username) {
-                console.log(`Received message ${msg} from ${from}`)
-            }
+            setMessages(prevState => [...prevState,mapMessage(response)]);
+            console.log(messages);
+            console.log(`Received message ${response.getMsg()} from ${response.getFrom()}`)
         });
 
         chatStream.on("status", function (status) {
@@ -79,7 +81,7 @@ export const ClientChatComponent = () => {
         msg.setFrom(username);
         msg.setTo(ADMIN_ROLE);
         const sentTime = new Date().toLocaleString();
-        msg.setTime(sentTime);
+        msg.setDatetime(sentTime);
 
         client.sendMsg(msg, null, (err, response) => {
             console.log(response);
@@ -100,12 +102,25 @@ export const ClientChatComponent = () => {
         setJoined(false);
     }
 
+    const getChatHistory = () => {
+        let req = new User();
+        req.setName(username);
+        client.getHistory(req, {}, (err, response) => {
+            const oldMessages = response.getHistoryList().length > 0? response.getHistoryList().map(response => mapMessage(response)): [];
+            console.log(`Retrieved chat history for user ${username}: ${oldMessages}`)
+            messages.push(oldMessages);
+            setMessages(messages);
+        });
+    }
+
     return (
         joined ?
             <SimpleChatComponent
                 user={"Admin"}
-                messages={messages}
-                onSendMessage={onSendMessage}/>
+                messages={
+                messages}
+                onSendMessage={onSendMessage}
+                onShowCallback={getChatHistory}/>
             :
             <Button onClick={onJoin}>Join Chat</Button>
     )

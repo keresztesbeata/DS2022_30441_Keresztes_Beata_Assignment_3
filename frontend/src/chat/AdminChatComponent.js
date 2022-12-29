@@ -17,24 +17,29 @@ export const AdminChatComponent = () => {
     const {ChatMessage, ReceiveMsgRequest, Empty} = require('./chat_pb.js');
     const client = new ChatServiceClient(CHAT_SERVICE_URL, null, null);
 
+    const mapMessage = (chatMessage) => {
+        const from = chatMessage.getFrom();
+        const to = chatMessage.getTo();
+        const msg = chatMessage.getMsg();
+        const datetime = chatMessage.getDatetime();
+
+        return {from: from, to: to, msg: msg, datetime: datetime};
+    }
+
     const listenToMessages = (user) => {
+        console.log(`Subscribing to message stream of user ${user}.`)
+        if(users.find(u => u === user)) {
+            console.log(`Already subscribed to message stream of user ${user}`);
+            return;
+        }
         const strRq = new ReceiveMsgRequest();
         strRq.setUser(user);
         strRq.setAdmin(1);
 
         let chatStream = client.receiveMsg(strRq, {});
         chatStream.on("data", (response) => {
-            const from = response.getFrom();
-            const to = response.getTo();
-            const msg = response.getMsg();
-            const time = response.getTime();
-
-            setMessages(prevState => [...prevState,
-                {from: from, to: to, msg: msg, time: time}]);
-
-            if (from !== username) {
-                console.log(`Received message ${msg} from ${from}`)
-            }
+            setMessages(prevState => [...prevState, mapMessage(response)]);
+            console.log(`Received message ${response.getMsg()} from ${response.getFrom()}`)
         });
 
         chatStream.on("status", function (status) {
@@ -54,21 +59,24 @@ export const AdminChatComponent = () => {
         let notificationStream = client.notifyAdmin(user, {});
         notificationStream.on("data", (response) => {
             const user = response.getName();
-            setUsers(prevState => [...prevState, user]);
-            console.log(`User ${user} has joined the chat!`);
             // start listening to messages from the new user
             listenToMessages(user);
+            setUsers(prevState => [...prevState, user]);
+            console.log(`User ${user} has joined the chat!`);
         });
 
+        setJoined(true);
         client.getAllClients(new Empty(), null, (err, response) => {
-            const users = response.array[0];
+            const users = response.getUsersList();
             if (users.length > 0) {
-                console.log(users)
-                setUsers(users.map(usersList => usersList[0]));
+                users.forEach(u => {
+                    listenToMessages(u.getName());
+                });
+                setUsers(users.map(u => u.getName()));
+                console.log("Retrieved clients: " + users);
             } else {
                 setUsers([]);
             }
-            setJoined(true);
         });
     }
 
@@ -78,7 +86,7 @@ export const AdminChatComponent = () => {
         msg.setFrom(username);
         msg.setTo(to);
         const sentTime = new Date().toLocaleString();
-        msg.setTime(sentTime);
+        msg.setDatetime(sentTime);
 
         client.sendMsg(msg, null, (err, response) => {
             console.log(response);
@@ -86,11 +94,23 @@ export const AdminChatComponent = () => {
         });
     }
 
+    const getChatHistory = (user) => {
+        let req = new User();
+        req.setName(user);
+        client.getHistory(req, {}, (err, response) => {
+            const oldMessages = response.getHistoryList().length > 0? response.getHistoryList().map(response => mapMessage(response)): [];
+            console.log(`Retrieved chat history for user ${user}: ${oldMessages}`)
+            messages.push(oldMessages);
+            setMessages(messages);
+        });
+    }
+
     const displayChatComponent = (user) =>
         <SimpleChatComponent
             user={user}
             messages={messages.filter(m => m.from === user || m.to === user)}
-            onSendMessage={(message) => onSendMessage(message, user)}/>;
+            onSendMessage={(message) => onSendMessage(message, user)}
+            onShowCallback={() => getChatHistory(user)}/>;
 
     return (
         joined ?

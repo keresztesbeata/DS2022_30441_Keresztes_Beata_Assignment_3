@@ -102,17 +102,6 @@ export const ClientChatComponent = () => {
         setJoined(false);
     }
 
-    const getChatHistory = () => {
-        let req = new User();
-        req.setName(username);
-        client.getHistory(req, {}, (err, response) => {
-            const oldMessages = response.getHistoryList().length > 0? response.getHistoryList().map(response => mapMessage(response)): [];
-            console.log(`Retrieved chat history for user ${username}: ${oldMessages}`)
-            messages.push(oldMessages);
-            setMessages(messages);
-        });
-    }
-
     return (
         joined ?
             <SimpleChatComponent
@@ -120,7 +109,7 @@ export const ClientChatComponent = () => {
                 messages={
                 messages}
                 onSendMessage={onSendMessage}
-                onShowCallback={getChatHistory}/>
+                onShowCallback={() => {}}/>
             :
             <Button onClick={onJoin}>Join Chat</Button>
     )

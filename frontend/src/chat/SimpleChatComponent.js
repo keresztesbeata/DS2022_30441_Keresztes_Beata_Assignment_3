@@ -1,5 +1,5 @@
 import {Button, Card, FormControl, InputGroup} from "react-bootstrap";
-import React, {useEffect, useState} from "react";
+import React, {useState} from "react";
 import {USERNAME} from "../common/auth/Authentication";
 
 export const SimpleChatComponent = (props) => {
@@ -29,8 +29,8 @@ export const SimpleChatComponent = (props) => {
     const onToggleShow = () => {
         const visible = show;
         setShow(!visible);
-        if(visible === false) {
-           // props.onShowCallback();
+        if (visible === false) {
+            props.onShowCallback();
         }
     }
 

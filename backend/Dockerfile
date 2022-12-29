@@ -6,8 +6,8 @@ COPY ./checkstyle.xml /root/
 
 WORKDIR /root
 RUN mvn package
-RUN java -Djarmode=layertools -jar /root/target/energy_data_platform-0.0.1-SNAPSHOT.jar list
-RUN java -Djarmode=layertools -jar /root/target/energy_data_platform-0.0.1-SNAPSHOT.jar extract
+RUN java -Djarmode=layertools -jar /root/target/backend-0.0.1-SNAPSHOT.jar list
+RUN java -Djarmode=layertools -jar /root/target/backend-0.0.1-SNAPSHOT.jar extract
 RUN ls -l /root
 
 FROM openjdk:17.0.2-jdk

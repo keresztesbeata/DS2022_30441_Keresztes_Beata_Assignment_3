@@ -1,4 +1,4 @@
-package lab.ds.backend;
+package lab.ds;
 
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;

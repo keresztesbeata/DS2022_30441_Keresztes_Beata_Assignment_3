@@ -28,9 +28,16 @@ const notifyAdmin = (call, callback) => {
 const join = (call, callback) => {
     const user = call.request;
 
-    if(clients.find(client => client.name === user.name) === undefined) {
-        clients.push(user);
+    if (clients.find(client => client.name === user.name) !== undefined) {
+        console.log(`User ${user.name} was already in the chat!`);
+        callback(null, {
+            error: 1,
+            msg: `User ${user.name} was already in the chat!`
+        });
+        return;
     }
+
+    clients.push(user);
     console.log(`User ${user.name} joined the chat!`);
     chatHistory.set(user.name, []);
 
@@ -38,7 +45,7 @@ const join = (call, callback) => {
     if (joinNotifications !== null) {
         joinNotifications.call.write(user);
         console.log(`New chat request from client ${user.name}`);
-    }else{
+    } else {
         console.log('Admin not available.')
     }
 
@@ -64,7 +71,7 @@ const receiveMsg = (call, callback) => {
     const client = call.request.user;
 
     if (call.request.admin === 1) {
-        console.log('Register Admin for receiving messages from '+client);
+        console.log('Register Admin for receiving messages from ' + client);
         adminStreams.set(client, {call});
     } else {
         console.log(`Register user ${client} for receiving messages from admin`);
@@ -84,7 +91,7 @@ const sendMsg = (call, callback) => {
     let client = (chatObj.to === ADMIN) ? chatObj.from : chatObj.to;
 
     clientStreams.get(client).call.write(chatObj);
-    if(adminStreams.get(client) !== undefined) {
+    if (adminStreams.get(client) !== undefined) {
         adminStreams.get(client).call.write(chatObj);
     }
     // append msg to history

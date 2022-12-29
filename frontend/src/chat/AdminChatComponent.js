@@ -98,10 +98,8 @@ export const AdminChatComponent = () => {
         let req = new User();
         req.setName(user);
         client.getHistory(req, {}, (err, response) => {
-            const oldMessages = response.getHistoryList().length > 0? response.getHistoryList().map(response => mapMessage(response)): [];
-            console.log(`Retrieved chat history for user ${user}: ${oldMessages}`)
-            messages.push(oldMessages);
-            setMessages(messages);
+            console.log(`Retrieved chat history for user ${user}: ${response.getHistoryList().length} messages`)
+            response.getHistoryList().forEach(msg => setMessages(prevState => [...prevState, mapMessage(msg)]));
         });
     }
 

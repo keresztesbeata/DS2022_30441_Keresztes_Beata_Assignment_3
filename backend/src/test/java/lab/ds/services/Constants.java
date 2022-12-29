@@ -1,4 +1,4 @@
-package lab.ds.backend.services;
+package lab.ds.services;
 
 public class Constants {
     public static final String USERNAME_1 = "user1";

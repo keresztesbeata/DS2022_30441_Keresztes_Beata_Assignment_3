@@ -11,8 +11,11 @@ import lab.ds.model.exceptions.EntityNotFoundException;
 import lab.ds.model.exceptions.InvalidFilterException;
 import lab.ds.model.exceptions.NoLoggedInUserException;
 import lab.ds.services.api.AccountService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -36,6 +39,7 @@ import static org.springframework.http.ResponseEntity.ok;
 @RestController
 @Validated
 @CrossOrigin
+@Slf4j
 public class AccountRestController {
 
     @Autowired
@@ -61,6 +65,13 @@ public class AccountRestController {
                 authentication.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
                         .collect(Collectors.toList())));
+    }
+
+    @PostMapping(LOGOUT_PATH)
+    public ResponseEntity logoutUser(@RequestBody Object body) {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("Access-Control-Allow-Origin", "*");
+        return new ResponseEntity(null, httpHeaders, HttpStatus.OK);
     }
 
     @PostMapping(value = REGISTER_PATH, consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)

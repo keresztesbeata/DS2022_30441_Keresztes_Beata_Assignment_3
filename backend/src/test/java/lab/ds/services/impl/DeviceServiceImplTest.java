@@ -1,6 +1,5 @@
-package lab.ds.backend.services.impl;
+package lab.ds.services.impl;
 
-import lab.ds.backend.services.Constants;
 import lab.ds.controllers.handlers.requests.DeviceData;
 import lab.ds.controllers.handlers.requests.LinkDeviceRequest;
 import lab.ds.model.entities.Account;
@@ -9,7 +8,7 @@ import lab.ds.model.entities.UserRole;
 import lab.ds.model.exceptions.EntityNotFoundException;
 import lab.ds.repositories.AccountRepository;
 import lab.ds.repositories.DeviceRepository;
-import lab.ds.services.impl.DeviceServiceImpl;
+import lab.ds.services.Constants;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

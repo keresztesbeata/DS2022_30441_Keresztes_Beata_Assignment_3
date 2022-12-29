@@ -1,4 +1,4 @@
-package lab.ds.backend.services.impl;
+package lab.ds.services.impl;
 
 import lab.ds.controllers.handlers.requests.AccountData;
 import lab.ds.dtos.AccountDTO;
@@ -8,7 +8,6 @@ import lab.ds.model.exceptions.DuplicateDataException;
 import lab.ds.model.exceptions.EntityNotFoundException;
 import lab.ds.repositories.AccountRepository;
 import lab.ds.repositories.DeviceRepository;
-import lab.ds.services.impl.AccountServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Optional;
 import java.util.UUID;
 
-import static lab.ds.backend.services.Constants.*;
+import static lab.ds.services.Constants.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 

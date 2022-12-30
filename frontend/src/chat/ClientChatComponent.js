@@ -1,6 +1,6 @@
 import React, {useState} from 'react'
 import {Button} from "react-bootstrap";
-import {ADMIN_ROLE, USERNAME} from "../common/auth/Authentication";
+import {ADMIN_ROLE, CLIENT_ROLE, USERNAME} from "../common/auth/Authentication";
 import {ChatServiceClient} from "./chat_grpc_web_pb";
 import {SimpleChatComponent} from "./SimpleChatComponent";
 
@@ -15,7 +15,11 @@ export const ClientChatComponent = () => {
 
     const {User} = require("./chat_pb");
     const {ChatServiceClient} = require("./chat_grpc_web_pb");
-    const {ChatMessage, ReceiveMsgRequest, LeaveRequest} = require('./chat_pb.js');
+    const {
+        ChatMessage,
+        LeaveRequest,
+        MsgReadNotification
+    } = require('./chat_pb.js');
 
     const client = new ChatServiceClient(CHAT_SERVICE_URL, null, null);
 
@@ -23,30 +27,35 @@ export const ClientChatComponent = () => {
         const from = chatMessage.getFrom();
         const to = chatMessage.getTo();
         const msg = chatMessage.getMsg();
-        const datetime = chatMessage.getDatetime();
+        const timestamp = chatMessage.getTimestamp();
         const read = chatMessage.getRead();
-        const sent = chatMessage.getSent();
 
-        return {from: from, to: to, msg: msg, datetime: datetime, read: read, sent: sent};
+        return {from: from, to: to, msg: msg, timestamp: timestamp, read: read};
+    }
+
+
+    const onMsgRead = (ids) => {
+        const msgReadNotification = new MsgReadNotification();
+        msgReadNotification.setUser(username);
+        msgReadNotification.setIdsList(ids);
+
+        client.readMsg(msgReadNotification, null, (err, response) => {
+            console.log(`Admin read message with ids: ${ids}!`);
+        });
     }
 
     const listenToMessages = () => {
-        const strRq = new ReceiveMsgRequest();
-        strRq.setUser(username);
-        strRq.setAdmin(0);
+        const strRq = new User();
+        strRq.setName(username);
+        strRq.setRole(CLIENT_ROLE);
 
-        let chatStream = client.receiveMsg(strRq, {});
+        let chatStream = client.receiveMsg(strRq, null);
         chatStream.on("data", (response) => {
-            if (response.getSent() === 1) {
-                setMessages(prevState => [...prevState, mapMessage(response)]);
-                console.log(`Received message ${response.getMsg()} from ${response.getFrom()}`);
-            } else if (response.getFrom() !== username) {
-                console.log('Admin is typing!');
-                setIsTyping(true);
-                setTimeout(function () {
-                    setIsTyping(false);
-                }, 1000);
+            setMessages(prevState => [...prevState, mapMessage(response)]);
+            if (response.getFrom() !== username) {
+                onMsgRead([response.getId()]);
             }
+            console.log(`Received message ${response.getMsg()} from ${response.getFrom()}`);
         });
 
         chatStream.on("status", function (status) {
@@ -57,6 +66,62 @@ export const ClientChatComponent = () => {
             console.log("Stream ended.");
             chatStream.cancel();
         });
+    }
+
+    const listenToMsgReadNotifications = () => {
+        const strRq = new User();
+        strRq.setName(username);
+        strRq.setRole(CLIENT_ROLE);
+
+        let readMsgStream = client.receiveReadMsgNotification(strRq, null);
+        readMsgStream.on("data", (response) => {
+            const userRead = response.getUser();
+            if(userRead !== username) {
+                const idsList = response.getIdsList();
+                console.log("Admin has read messages with ids: ", idsList);
+                const readMessages = messages.map(m => idsList.includes(m.id) ? {m, read: 1} : m);
+                setMessages(readMessages);
+                console.log(`Admin ${userRead} read ${idsList.length} messages!`);
+            }
+        });
+
+        readMsgStream.on("status", function (status) {
+            console.log(status.code, status.details, status.metadata);
+        });
+
+        readMsgStream.on("end", () => {
+            console.log("Stream ended.");
+            readMsgStream.cancel();
+        });
+        console.log(`Subscribed to message read notification stream of admin.`);
+    }
+
+    const listenToTypingNotifications = () => {
+        const strRq = new User();
+        strRq.setName(username);
+        strRq.setRole(CLIENT_ROLE);
+
+        let typeNotificationStream = client.receiveTypeNotification(strRq, null);
+        typeNotificationStream.on("data", (response) => {
+            console.log(response)
+            if (response.getRole() === ADMIN_ROLE) {
+                console.log(`Admin is typing`);
+                setIsTyping(true);
+                setTimeout(function () {
+                    setIsTyping(false);
+                }, 1000);
+            }
+        });
+
+        typeNotificationStream.on("status", function (status) {
+            console.log(status.code, status.details, status.metadata);
+        });
+
+        typeNotificationStream.on("end", () => {
+            console.log("Stream ended.");
+            typeNotificationStream.cancel();
+        });
+        console.log(`Subscribed to typing notification stream of admin.`)
     }
 
     const onJoin = () => {
@@ -82,6 +147,8 @@ export const ClientChatComponent = () => {
                 console.log(`You have joined the chat using the name ${username}!`);
                 // start listening to incoming messages
                 listenToMessages();
+                listenToMsgReadNotifications();
+                listenToTypingNotifications();
             });
     }
 
@@ -91,26 +158,20 @@ export const ClientChatComponent = () => {
         msg.setFrom(username);
         msg.setTo(ADMIN_ROLE);
         msg.setRead(0);
-        msg.setSent(1);
         const sentTime = new Date().toLocaleString();
-        msg.setDatetime(sentTime);
+        msg.setTimestamp(sentTime);
 
-        client.sendMsg(msg, null, (err, response) => {
+        client.sendMsg(msg, {}, (err, response) => {
             console.log(`Sent message ${message}!`);
         });
     }
 
     const onTyping = () => {
-        const msg = new ChatMessage();
-        msg.setMsg("...");
-        msg.setFrom(username);
-        msg.setTo(ADMIN_ROLE);
-        msg.setRead(0);
-        msg.setSent(0);
-        const sentTime = new Date().toLocaleString();
-        msg.setDatetime(sentTime);
+        const user = new User();
+        user.setName(username);
+        user.setRole(CLIENT_ROLE);
 
-        client.sendMsg(msg, null, (err, response) => {
+        client.type(user, {}, (err, response) => {
             console.log(`User ${username} typing response to admin!`);
         });
     }
@@ -135,7 +196,16 @@ export const ClientChatComponent = () => {
             console.log(`Retrieved chat history for user ${username}: ${response.getHistoryList().length} messages`);
             const history = messages.filter(msg => msg.from !== username || msg.to !== username);
             setMessages(history);
-            response.getHistoryList().forEach(msg => setMessages(prevState => [...prevState, mapMessage(msg)]));
+            const historyList = response.getHistoryList();
+            if (historyList.length > 0) {
+                historyList.forEach(msg => {
+                    setMessages(prevState => [...prevState, mapMessage(msg)]);
+                });
+                const ids = historyList.filter(msg => msg.getFrom() !== username).map(msg => msg.getId());
+                if (ids.length > 0) {
+                    onMsgRead(ids);
+                }
+            }
         });
     }
 

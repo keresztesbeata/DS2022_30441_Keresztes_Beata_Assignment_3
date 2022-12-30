@@ -1,9 +1,10 @@
 import React from 'react'
 import {Nav} from "react-bootstrap";
-import {Logout} from "../../common/auth/Authentication";
+import {Logout, USERNAME} from "../../common/auth/Authentication";
 
 export class AdminNavigationMenu extends React.Component {
     render() {
+        const username = sessionStorage.getItem(USERNAME);
         return (
             <div className="side-nav">
                 <Nav defaultActiveKey="/admin" className="flex-column">
@@ -12,6 +13,7 @@ export class AdminNavigationMenu extends React.Component {
                     <Nav.Link href="/admin/devices">Manage Devices</Nav.Link>
                     <Nav.Link href="/admin/link_device">Link Devices to Users</Nav.Link>
                     <Nav.Link onClick={Logout}>Logout</Nav.Link>
+                    <p>You are logged in as <em>{username}</em>!</p>
                 </Nav>
             </div>
         )

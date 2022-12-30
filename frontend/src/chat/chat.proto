@@ -5,13 +5,13 @@ message ChatMessage {
     string from = 2;
     string to = 3;
     string msg = 4;
-    string datetime = 5;
-    int32 sent = 6;
-    int32 read = 7;
+    string timestamp = 5;
+    int32 read = 6;
 }
 
 message User {
     string name = 1;
+    string role = 2;
 }
 
 message Empty {}
@@ -29,21 +29,25 @@ message ChatHistory {
     repeated ChatMessage history = 1;
 }
 
-message ReceiveMsgRequest {
-    string user = 1;
-    int32 admin = 2;
-}
-
 message LeaveRequest {
     string user = 1;
 }
 
+message MsgReadNotification {
+    string user = 1;
+    repeated int32 ids = 2;
+}
+
 service ChatService {
+    rpc receiveJoinNotification(User) returns (stream User) {}
+    rpc receiveMsg(User) returns (stream ChatMessage) {}
+    rpc receiveTypeNotification(User) returns (stream User) {}
+    rpc receiveReadMsgNotification(User) returns (stream MsgReadNotification) {}
     rpc join(User) returns (JoinResponse) {}
-    rpc notifyAdmin(User) returns (stream User) {}
-    rpc getHistory(User) returns (ChatHistory) {}
     rpc sendMsg(ChatMessage) returns (Empty) {}
-    rpc receiveMsg(ReceiveMsgRequest) returns (stream ChatMessage) {}
+    rpc type(User) returns (Empty) {}
+    rpc readMsg(MsgReadNotification) returns (Empty) {}
+    rpc getHistory(User) returns (ChatHistory) {}
     rpc getAllClients(Empty) returns (UserList) {}
     rpc leave(LeaveRequest) returns (Empty) {}
 }

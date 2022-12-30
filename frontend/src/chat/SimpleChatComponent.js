@@ -1,6 +1,7 @@
 import {Button, Card, FormControl, InputGroup} from "react-bootstrap";
 import React, {useState} from "react";
 import {USERNAME} from "../common/auth/Authentication";
+import {BsCheck, BsCheck2All} from "react-icons/bs";
 
 export const SimpleChatComponent = (props) => {
     const [show, setShow] = useState(false);
@@ -21,7 +22,8 @@ export const SimpleChatComponent = (props) => {
             <div className={messageStyle + " mt-2"} key={message.id}>
                 <p className={detailsStyle}>{message.from}</p>
                 <p>{message.msg}</p>
-                <p className={detailsStyle}>{formatDate(message.datetime.toString())}</p>
+                <p className={detailsStyle}>{formatDate(message.timestamp.toString())}</p>
+                {message.read === 1 ? <BsCheck2All/> : <BsCheck/>}
             </div>
         )
     }

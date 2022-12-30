@@ -100,16 +100,14 @@ const getAllClients = (call, callback) => {
     callback(null, {users: clients});
 };
 
-const getHistory = async (call, callback) => {
-    const user = call.request.name;
-    console.log(`Retrieve chat history for client ${user}`);
+const getAllHistory = async (call, callback) => {
+    console.log(`Retrieve chat history for all users!`);
 
     try {
         await transaction(pool, async connection => {
             let sql = `select * from messages where to_user=? or from_user=?`;
-            const results = await connection.query(sql, [user, user]);
+            const results = await connection.query(sql, [ADMIN, ADMIN]);
             console.log(`Retrieved rows:`, results[0].length);
-            console.log(results[0]);
             const chatHistory = results[0].map(row => {
                 return {
                     id: row.id,
@@ -120,7 +118,32 @@ const getHistory = async (call, callback) => {
                     read: row.read_flag
                 }
             });
-            console.log(chatHistory);
+            callback(null, {history: chatHistory});
+        });
+    } catch (err) {
+        console.error('Failed to retrieve all chat history: ', err.message);
+    }
+}
+
+const getHistory = async (call, callback) => {
+    const user = call.request.name;
+    console.log(`Retrieve chat history for client ${user}`);
+
+    try {
+        await transaction(pool, async connection => {
+            let sql = `select * from messages where to_user=? or from_user=?`;
+            const results = await connection.query(sql, [user, user]);
+            console.log(`Retrieved rows:`, results[0].length);
+            const chatHistory = results[0].map(row => {
+                return {
+                    id: row.id,
+                    from: row.from_user,
+                    to: row.to_user,
+                    msg: row.msg,
+                    timestamp: row.timestamp,
+                    read: row.read_flag
+                }
+            });
             callback(null, {history: chatHistory});
         });
     } catch (err) {
@@ -149,9 +172,9 @@ const sendMsg = async (call, callback) => {
 
     // set message type
     chatObj.type = 1;
+    chatObj.read = 0;
 
     try {
-        let id = 0;
         await transaction(pool, async connection => {
             // insert msg to db
             const sql = `insert into messages(from_user, to_user, msg, timestamp, read_flag) values(?)`;
@@ -161,18 +184,19 @@ const sendMsg = async (call, callback) => {
 
             const sqlGetLastId = `select last_insert_id()`;
             const results = await connection.query(sqlGetLastId, [messageData]);
-            id = results[0][0]['last_insert_id()'];
+            const id = results[0][0]['last_insert_id()'];
             console.log(`Inserted row with id:`, id);
+            chatObj.id = id;
+
+            let client = (chatObj.to === ADMIN) ? chatObj.from : chatObj.to;
+            const stream = messageStreams.get(client);
+            if (stream.client !== undefined) {
+                stream.client.call.write(chatObj);
+            }
+            if (stream.admin !== undefined) {
+                stream.admin.call.write(chatObj);
+            }
         });
-        chatObj.id = id;
-        let client = (chatObj.to === ADMIN) ? chatObj.from : chatObj.to;
-        const stream = messageStreams.get(client);
-        if (stream.client !== undefined) {
-            stream.client.call.write(chatObj);
-        }
-        if (stream.admin !== undefined) {
-            stream.admin.call.write(chatObj);
-        }
     } catch (error) {
         console.error('Failed to insert messages: ', error.message);
     }
@@ -204,8 +228,6 @@ const readMsg = async (call, callback) => {
 
     if (read === 1) {
         console.log(`User ${from} has read the messages with id ${id}`);
-        // set message type
-        chatObj.type = 3;
 
         try {
             await transaction(pool, async connection => {
@@ -216,6 +238,8 @@ const readMsg = async (call, callback) => {
                 console.log(`Updated row with id ${id}`);
             });
 
+            // set message type
+            chatObj.type = 3;
             let client = (from === ADMIN) ? to : from;
             const stream = messageStreams.get(client);
             console.log(chatObj)
@@ -256,6 +280,7 @@ async function main() {
         type,
         readMsg,
         getHistory,
+        getAllHistory,
         getAllClients,
         leave
     });

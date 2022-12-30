@@ -7,21 +7,15 @@ export const SimpleChatComponent = (props) => {
     const [show, setShow] = useState(false);
     const [draftMessage, setDraftMessage] = useState("");
 
-    const formatDate = (date) => {
-        const parsedDate = new Date(Date.parse(date));
-        return parsedDate.getFullYear() + "-" + (parsedDate.getMonth() + 1) + "-" + parsedDate.getDay() + " " +
-            parsedDate.getHours() + ":" + parsedDate.getMinutes() + ":" + parsedDate.getSeconds();
-    }
-
     const displaySingleMessage = (message) => {
         const detailsStyle = "align-right small-text";
         const messageStyle = message.from === ADMIN_ROLE ? "response-from" : "response-to";
 
         return (
-            <div className={messageStyle + " mt-2"} onClick={(e) => props.onClick(message)}>
+            <div className={messageStyle + " mt-2"}>
                 <p className={detailsStyle}>{message.from}</p>
                 <p>{message.msg}</p>
-                <p className={detailsStyle}>{formatDate(message.timestamp.toString())}</p>
+                <p className={detailsStyle}>{message.timestamp}</p>
                 {message.read === 1 ? <BsCheck2All/> : <BsCheck/>}
             </div>
         )

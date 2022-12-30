@@ -42,6 +42,7 @@ service ChatService {
     rpc type(ChatMessage) returns (Empty) {}
     rpc readMsg(ChatMessage) returns (Empty) {}
     rpc getHistory(User) returns (ChatHistory) {}
+    rpc getAllHistory(Empty) returns (ChatHistory) {}
     rpc getAllClients(Empty) returns (UserList) {}
     rpc leave(LeaveRequest) returns (Empty) {}
 }

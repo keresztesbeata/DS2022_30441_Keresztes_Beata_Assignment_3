@@ -6,15 +6,14 @@ import {SimpleChatComponent} from "./SimpleChatComponent";
 const CHAT_SERVICE_URL = "http://localhost:8081";
 
 export const AdminChatComponent = () => {
-    const [messages, setMessages] = useState([]);
-    const [joined, setJoined] = useState(false);
-    const [users, setUsers] = useState([]);
-    const [isTyping, setIsTyping] = useState([]);
-
-    const {User} = require("./chat_pb");
     const {ChatServiceClient} = require("./chat_grpc_web_pb");
-    const {ChatMessage, Empty} = require('./chat_pb.js');
+    const {User, ChatMessage, Empty} = require('./chat_pb.js');
     const client = new ChatServiceClient(CHAT_SERVICE_URL, null, null);
+
+    const [isTyping, setIsTyping] = useState([]);
+    const [joined, setJoined] = useState(false);
+    const [messages, setMessages] = useState([]);
+    const [users, setUsers] = useState([]);
 
     const mapMessage = (chatMessage) => {
         const id = chatMessage.getId();
@@ -62,7 +61,7 @@ export const AdminChatComponent = () => {
             } else if (response.getType() === 2) {
                 onTypingNotification(response);
             } else if (response.getType() === 3) {
-                getChatHistory(user);
+                getAllChatHistory(user);
             }
         });
 
@@ -89,15 +88,17 @@ export const AdminChatComponent = () => {
     const onJoin = () => {
         client.getAllClients(new Empty(), {}, (err, response) => {
             const usersList = response.getUsersList().map(u => u.getName());
-            console.log("Retrieved clients: " + usersList);
+            console.log("Retrieved clients: " + usersList.length);
+
             usersList.forEach(u => {
                 subscribeToNotifications(u)
                     .then(() => {
                         console.log(`Subscribed to notification channels of user ${u}!`);
                     });
             });
-            setJoined(true);
         });
+
+        setJoined(true);
 
         const user = new User();
         user.setName(ADMIN_ROLE);
@@ -159,9 +160,27 @@ export const AdminChatComponent = () => {
             const historyList = response.getHistoryList();
             if (historyList.length > 0) {
                 historyList.forEach(msg => {
+                    if(msg.getTo() === ADMIN_ROLE && msg.getRead() === 0) {
+                        msg.setRead(1);
+                        onMsgRead(user, msg.getId());
+                    }
                     setMessages(prevState => [...prevState, mapMessage(msg)]);
                 });
             }
+        });
+    }
+
+    const getAllChatHistory = (user) => {
+        client.getAllHistory(new Empty(), {}, (err, response) => {
+            const historyList = response.getHistoryList().map(m => {
+                if(m.getTo() === ADMIN_ROLE && m.getFrom() === user && m.getRead() === 0) {
+                    m.setRead(1);
+                    onMsgRead(m.getFrom(), m.getId());
+                }
+                return mapMessage(m);
+            });
+            setMessages(historyList);
+            console.log(`Retrieved chat history for all users: ${historyList.length} messages`);
         });
     }
 

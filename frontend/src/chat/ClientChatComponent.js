@@ -7,16 +7,13 @@ const CHAT_SERVICE_URL = "http://localhost:8081";
 export const JOINED = "joined_chat";
 
 export const ClientChatComponent = () => {
-    const [messages, setMessages] = useState([]);
     const [isTyping, setIsTyping] = useState(false);
     const [joined, setJoined] = useState(() => sessionStorage.getItem(JOINED) !== null);
+    const [messages, setMessages] = useState([]);
     const username = sessionStorage.getItem(USERNAME);
 
-    const {User} = require("./chat_pb");
     const {ChatServiceClient} = require("./chat_grpc_web_pb");
-    const {
-        ChatMessage
-    } = require('./chat_pb.js');
+    const {ChatMessage, User} = require('./chat_pb.js');
 
     const client = new ChatServiceClient(CHAT_SERVICE_URL, null, null);
 
@@ -159,14 +156,14 @@ export const ClientChatComponent = () => {
         req.setName(username);
         client.getHistory(req, {}, (err, response) => {
             console.log(`Retrieved chat history for user ${username}: ${response.getHistoryList().length} messages`);
-            const history = messages.filter(msg => msg.from !== username || msg.to !== username);
-            setMessages(history);
-            const historyList = response.getHistoryList();
-            if (historyList.length > 0) {
-                historyList.forEach(msg => {
-                    setMessages(prevState => [...prevState, mapMessage(msg)]);
-                });
-            }
+            const historyList = response.getHistoryList().map(m => {
+                if(m.getTo() === username && m.getRead() === 0) {
+                    m.setRead(1);
+                    onMsgRead(m.getFrom(), m.getId());
+                }
+                return mapMessage(m);
+            });
+            setMessages(historyList);
         });
     }
 

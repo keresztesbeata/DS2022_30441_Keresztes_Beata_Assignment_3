@@ -28,7 +28,11 @@ export const AdminChatComponent = () => {
     }
 
     const onMsgReceivedNotification = (response) => {
-        setMessages(prevState => [...prevState, mapMessage(response)]);
+        if (response.getTo() === ADMIN_ROLE) {
+            onMsgRead(response.getFrom(), response.getId());
+        } else {
+            setMessages(prevState => [...prevState, mapMessage(response)]);
+        }
         console.log(`Received message ${response.getMsg()} from ${response.getFrom()}`);
     }
 
@@ -161,12 +165,6 @@ export const AdminChatComponent = () => {
         });
     }
 
-    const onClick = (message) => {
-        if (message.to === ADMIN_ROLE) {
-            onMsgRead(message.from, message.id);
-        }
-    }
-
     const displayChatComponent = (user) =>
         <SimpleChatComponent
             user={user}
@@ -175,7 +173,6 @@ export const AdminChatComponent = () => {
             onSendMessage={(message) => onSendMessage(message, user)}
             onShowCallback={() => getChatHistory(user)}
             onTyping={() => onTyping(user)}
-            onClick={(message) => onClick(message)}
         />;
 
     return (

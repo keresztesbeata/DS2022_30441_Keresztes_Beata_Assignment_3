@@ -54,7 +54,11 @@ export const ClientChatComponent = () => {
     }
 
     const onMsgReceivedNotification = (response) => {
-        setMessages(prevState => [...prevState, mapMessage(response)]);
+        if (response.getTo() === username) {
+            onMsgRead(response.getId());
+        }else{
+            setMessages(prevState => [...prevState, mapMessage(response)]);
+        }
         console.log(`Received message ${response.getMsg()} from ${response.getFrom()}`);
     }
 
@@ -166,12 +170,6 @@ export const ClientChatComponent = () => {
         });
     }
 
-    const onClick = (message) => {
-        if (message.to === username) {
-            onMsgRead(message.id);
-        }
-    }
-
     return (
         joined ?
             <SimpleChatComponent
@@ -181,7 +179,6 @@ export const ClientChatComponent = () => {
                 onSendMessage={onSendMessage}
                 onShowCallback={getChatHistory}
                 onTyping={onTyping}
-                onClick={(message) => onClick(message)}
             />
             :
             <Button onClick={onJoin}>Join Chat</Button>

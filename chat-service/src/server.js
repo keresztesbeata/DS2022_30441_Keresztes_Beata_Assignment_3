@@ -7,8 +7,6 @@ const PROTO_PATH = "src/chat.proto";
 const SERVER_URI = "0.0.0.0:9090";
 
 let clients = [];
-let msgReadStreams = new Map([]);
-let typingStreams = new Map([]);
 let messageStreams = new Map([]);
 let joinNotifications = null;
 
@@ -46,7 +44,7 @@ const connectToDb = async () => {
                           to_user varchar(250) not null,
                           msg varchar(1000),
                           timestamp varchar(250) not null,
-                          read_flag int default 0,
+                          read_flag int not null default 0,
                           primary key (id)
                       )`;
 
@@ -111,7 +109,7 @@ const getHistory = async (call, callback) => {
             let sql = `select * from messages where to_user=? or from_user=?`;
             const results = await connection.query(sql, [user, user]);
             console.log(`Retrieved rows:`, results[0].length);
-            console.log(results[0])
+            console.log(results[0]);
             const chatHistory = results[0].map(row => {
                 return {
                     id: row.id,
@@ -131,117 +129,108 @@ const getHistory = async (call, callback) => {
 }
 
 const receiveMsg = (call, callback) => {
-    const name = call.request.name;
-    const str = messageStreams.get(name);
+    const user = call.request.name;
+    const str = messageStreams.get(user);
 
     if (call.request.role === ADMIN) {
         const clientStr = (str === undefined) ? undefined : str.client;
-        messageStreams.set(name, {client: clientStr, admin: {call}});
-        console.log('Register Admin for receiving messages from ' + name);
+        messageStreams.set(user, {client: clientStr, admin: {call}});
+        console.log('Register Admin for receiving messages from ' + user);
     } else {
         const adminStr = (str === undefined) ? undefined : str.admin;
-        messageStreams.set(name, {client: {call}, admin: adminStr});
-        console.log(`Register client ${name} for receiving messages from admin`);
+        messageStreams.set(user, {client: {call}, admin: adminStr});
+        console.log(`Register client ${user} for receiving messages from admin`);
     }
-};
-
-const receiveTypeNotification = (call, callback) => {
-    const name = call.request.name;
-    const str = typingStreams.get(name);
-
-    if (call.request.role === ADMIN) {
-        const clientStr = (str === undefined) ? undefined : str.client;
-        typingStreams.set(name, {client: clientStr, admin: {call}});
-        console.log('Register Admin for receiving typing notifications from ' + name);
-    } else {
-        const adminStr = (str === undefined) ? undefined : str.admin;
-        typingStreams.set(name, {client: {call}, admin: adminStr});
-        console.log(`Register client ${name} for receiving typing notifications from admin`);
-    }
-};
-
-const receiveReadMsgNotification = (call, callback) => {
-    const name = call.request.name;
-    msgReadStreams.set(name, {call});
-    console.log(`Register user ${name} for receiving message read notifications`);
 };
 
 const sendMsg = async (call, callback) => {
     const chatObj = call.request;
-
     console.log(`Sending message ${chatObj.msg} from ${chatObj.from} to ${chatObj.to}`);
 
-    let client = (chatObj.to === ADMIN) ? chatObj.from : chatObj.to;
-
-    const stream = messageStreams.get(client);
-
-    if (stream.client !== undefined) {
-        stream.client.call.write(chatObj);
-    }
-
-    if (stream.admin !== undefined) {
-        stream.admin.call.write(chatObj);
-    }
+    // set message type
+    chatObj.type = 1;
 
     try {
+        let id = 0;
         await transaction(pool, async connection => {
             // insert msg to db
             const sql = `insert into messages(from_user, to_user, msg, timestamp, read_flag) values(?)`;
             // execute the insert statement
             const messageData = [chatObj.from, chatObj.to, chatObj.msg, chatObj.timestamp, chatObj.read];
-            const results = await connection.query(sql, [messageData])
-            console.log(`Inserted rows:`, results[0].affectedRows);
-            callback(null, {});
+            await connection.query(sql, [messageData]);
+
+            const sqlGetLastId = `select last_insert_id()`;
+            const results = await connection.query(sqlGetLastId, [messageData]);
+            id = results[0][0]['last_insert_id()'];
+            console.log(`Inserted row with id:`, id);
         });
+        chatObj.id = id;
+        let client = (chatObj.to === ADMIN) ? chatObj.from : chatObj.to;
+        const stream = messageStreams.get(client);
+        if (stream.client !== undefined) {
+            stream.client.call.write(chatObj);
+        }
+        if (stream.admin !== undefined) {
+            stream.admin.call.write(chatObj);
+        }
     } catch (error) {
         console.error('Failed to insert messages: ', error.message);
     }
+    callback(null, {});
 };
 
 const type = (call, callback) => {
-    const name = call.request.name;
-    const role = call.request.role;
+    let chatObj = call.request;
+    // set message type
+    chatObj.type = 2;
 
-    const stream = typingStreams.get(name);
-
-    if (role === ADMIN) {
-        console.log(`Admin is typing`);
-        if (stream.client !== undefined) {
-            stream.client.call.write(call.request);
-        }
-    } else {
-        console.log(`User ${name} is typing`);
-        if (stream.admin !== undefined) {
-            stream.admin.call.write(call.request);
-        }
+    let client = (chatObj.to === ADMIN) ? chatObj.from : chatObj.to;
+    const stream = messageStreams.get(client);
+    if (stream.client !== undefined) {
+        stream.client.call.write(chatObj);
+    }
+    if (stream.admin !== undefined) {
+        stream.admin.call.write(chatObj);
     }
     callback(null, {});
 };
 
 const readMsg = async (call, callback) => {
-    const user = call.request.user;
-    const ids = call.request.ids;
+    let chatObj = call.request;
+    const from = chatObj.from;
+    const to = chatObj.to;
+    const read = chatObj.read;
+    const id = chatObj.id;
 
-    console.log(`User ${user} has read the messages with ids ${ids}`);
-    const stream = msgReadStreams.get(user);
-    stream.call.write(call.request);
+    if (read === 1) {
+        console.log(`User ${from} has read the messages with id ${id}`);
+        // set message type
+        chatObj.type = 3;
 
-    try {
-        await transaction(pool, async connection => {
-            // update the messages in DB
-            // insert msg to db
-            const sql = `update messages set read_flag=1 where id in (?)`;
-            // execute the insert statement
-            const results = await connection.query(sql, [ids]);
-            console.log(`Updated rows:`, results[0].affectedRows);
-            callback(null, {});
-        });
-    } catch (error) {
-        console.error('Failed to update read messages: ', error.message);
+        try {
+            await transaction(pool, async connection => {
+                // update the message in DB
+                const sql = `update messages set read_flag=1 where id=?`;
+                // execute the update statement
+                const results = connection.query(sql, [id]);
+                console.log(`Updated row with id ${id}`);
+            });
+
+            let client = (from === ADMIN) ? to : from;
+            const stream = messageStreams.get(client);
+            console.log(chatObj)
+            if (stream.client !== undefined) {
+                stream.client.call.write(chatObj);
+            }
+            if (stream.admin !== undefined) {
+                stream.admin.call.write(chatObj);
+            }
+        } catch (error) {
+            console.error('Failed to update read message: ', error.message);
+        }
     }
+    callback(null, {});
 };
-
-const server = new grpc.Server();
 
 const leave = (call, callback) => {
     const user = call.request.user;
@@ -249,29 +238,32 @@ const leave = (call, callback) => {
 
     clients = clients.filter(client => client.name !== user.name);
     messageStreams.delete(user.name);
-    typingStreams.delete(user.name);
-    msgReadStreams.delete(user.name);
 }
 
-server.addService(protoDescriptor.ChatService.service, {
-    receiveJoinNotification,
-    receiveMsg,
-    receiveTypeNotification,
-    receiveReadMsgNotification,
-    join,
-    sendMsg,
-    type,
-    readMsg,
-    getHistory,
-    getAllClients,
-    leave
-});
 
-server.bind(SERVER_URI, grpc.ServerCredentials.createInsecure());
+async function main() {
+    // connect to db
+    console.log("Connecting to db...");
+    await connectToDb();
 
-server.start();
-console.log("Server is running!");
+    const server = new grpc.Server();
 
-// connect to db
-console.log("Connecting to db...");
-connectToDb();
+    server.addService(protoDescriptor.ChatService.service, {
+        receiveJoinNotification,
+        receiveMsg,
+        join,
+        sendMsg,
+        type,
+        readMsg,
+        getHistory,
+        getAllClients,
+        leave
+    });
+
+    server.bindAsync(SERVER_URI, grpc.ServerCredentials.createInsecure(), () => {
+        server.start();
+        console.log("Server running at " + SERVER_URI);
+    });
+}
+
+main().then(() => console.log('Application started'));

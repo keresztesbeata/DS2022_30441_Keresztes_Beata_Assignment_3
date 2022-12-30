@@ -7,6 +7,7 @@ message ChatMessage {
     string msg = 4;
     string timestamp = 5;
     int32 read = 6;
+    int32 type = 7;
 }
 
 message User {
@@ -33,20 +34,13 @@ message LeaveRequest {
     string user = 1;
 }
 
-message MsgReadNotification {
-    string user = 1;
-    repeated int32 ids = 2;
-}
-
 service ChatService {
     rpc receiveJoinNotification(User) returns (stream User) {}
     rpc receiveMsg(User) returns (stream ChatMessage) {}
-    rpc receiveTypeNotification(User) returns (stream User) {}
-    rpc receiveReadMsgNotification(User) returns (stream MsgReadNotification) {}
     rpc join(User) returns (JoinResponse) {}
     rpc sendMsg(ChatMessage) returns (Empty) {}
-    rpc type(User) returns (Empty) {}
-    rpc readMsg(MsgReadNotification) returns (Empty) {}
+    rpc type(ChatMessage) returns (Empty) {}
+    rpc readMsg(ChatMessage) returns (Empty) {}
     rpc getHistory(User) returns (ChatHistory) {}
     rpc getAllClients(Empty) returns (UserList) {}
     rpc leave(LeaveRequest) returns (Empty) {}

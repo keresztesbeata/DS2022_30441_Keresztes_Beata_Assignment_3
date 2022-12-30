@@ -1,12 +1,11 @@
 import {Button, Card, FormControl, InputGroup} from "react-bootstrap";
 import React, {useState} from "react";
-import {USERNAME} from "../common/auth/Authentication";
+import {ADMIN_ROLE} from "../common/auth/Authentication";
 import {BsCheck, BsCheck2All} from "react-icons/bs";
 
 export const SimpleChatComponent = (props) => {
     const [show, setShow] = useState(false);
     const [draftMessage, setDraftMessage] = useState("");
-    const username = sessionStorage.getItem(USERNAME);
 
     const formatDate = (date) => {
         const parsedDate = new Date(Date.parse(date));
@@ -16,10 +15,10 @@ export const SimpleChatComponent = (props) => {
 
     const displaySingleMessage = (message) => {
         const detailsStyle = "align-right small-text";
-        const messageStyle = message.from === username ? "response-from" : "response-to";
+        const messageStyle = message.from === ADMIN_ROLE ? "response-from" : "response-to";
 
         return (
-            <div className={messageStyle + " mt-2"} key={message.id}>
+            <div className={messageStyle + " mt-2"} onClick={(e) => props.onClick(message)}>
                 <p className={detailsStyle}>{message.from}</p>
                 <p>{message.msg}</p>
                 <p className={detailsStyle}>{formatDate(message.timestamp.toString())}</p>

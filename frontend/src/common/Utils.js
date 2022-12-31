@@ -1,11 +1,16 @@
-const HOST_IP = process.env.REACT_APP_HOST_IP_ADDRESS !== undefined? process.env.REACT_APP_HOST_IP_ADDRESS:'localhost';
+const BACKEND_HOST = process.env.BACKEND_HOST_IP !== undefined? process.env.BACKEND_HOST_IP:'localhost';
+const GRPC_HOST = process.env.GRPC_HOST_IP !== undefined? process.env.GRPC_HOST_IP:'localhost';
 
 export function getServerAddress() {
-    return "http://"+HOST_IP+":8080";
+    return "http://"+BACKEND_HOST+":8080";
 }
 
 export function getWebsocketAddress() {
-    return "ws://"+HOST_IP+":8080/ws";
+    return "ws://"+BACKEND_HOST+":8080/ws";
+}
+
+export function getGrpcAddress() {
+    return "http://"+GRPC_HOST+":8081";
 }
 
 export function redirect(url) {

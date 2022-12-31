@@ -3,7 +3,7 @@ version: '3'
 services:
 
   frontend:
-    image: containerregistrybeatakeresztes30441.azurecr.io/react:latest
+    image: react:latest
     container_name: frontend
     restart: always
     build:
@@ -12,9 +12,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - REACT_APP_HOST_IP_ADDRESS=20.79.245.9
-      - GRPC-SERVER-PORT=9090
-      - GRPC-SERVER_HOST=0.0.0.0
+      - BACKEND_HOST_IP=localhost
+      - GRPC_HOST_IP=localhost
     deploy:
       resources:
         limits:

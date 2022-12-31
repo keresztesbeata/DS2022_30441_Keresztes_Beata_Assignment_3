@@ -2,9 +2,10 @@ import React, {useState} from 'react'
 import {Button} from "react-bootstrap";
 import {ADMIN_ROLE, CLIENT_ROLE, USERNAME} from "../common/auth/Authentication";
 import {SimpleChatComponent} from "./SimpleChatComponent";
+import {mapMessage} from "./Utils";
+import {getGrpcAddress} from "../common/Utils";
 
-const CHAT_SERVICE_URL = "http://localhost:8081";
-export const JOINED = "joined_chat";
+const JOINED = "joined_chat";
 
 export const ClientChatComponent = () => {
     const [isTyping, setIsTyping] = useState(false);
@@ -15,18 +16,7 @@ export const ClientChatComponent = () => {
     const {ChatServiceClient} = require("./chat_grpc_web_pb");
     const {ChatMessage, User} = require('./chat_pb.js');
 
-    const client = new ChatServiceClient(CHAT_SERVICE_URL, null, null);
-
-    const mapMessage = (chatMessage) => {
-        const id = chatMessage.getId();
-        const from = chatMessage.getFrom();
-        const to = chatMessage.getTo();
-        const msg = chatMessage.getMsg();
-        const timestamp = chatMessage.getTimestamp();
-        const read = chatMessage.getRead();
-
-        return {id: id, from: from, to: to, msg: msg, timestamp: timestamp, read: read};
-    }
+    const client = new ChatServiceClient(getGrpcAddress(), null, null);
 
     const onMsgRead = (id) => {
         const msg = new ChatMessage();

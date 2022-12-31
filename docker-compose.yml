@@ -45,7 +45,7 @@ services:
     build:
       context: backend
       dockerfile: Dockerfile
-    restart: always
+    restart: always    
     ports:
       - "8080:8080"
     depends_on:
@@ -54,5 +54,40 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.50'
+          cpus: '0.30'
           memory: 1G
+
+  grpc-web-react:
+    image: grpc-web-react:latest
+    container_name: grpc-web-react
+    build:
+      context: envoy
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8081:8081"
+      - "9901:9901"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.10'
+          memory: 1G
+  
+  chat-service:
+    image: node:16.17.1
+    container_name: chat-service
+    build:
+      context: chat-service
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "9090:9090"
+    depends_on:
+      - grpc-web-react
+      - mysql
+    deploy:
+      resources:
+        limits:
+          cpus: '0.10'
+          memory: 1G
+          

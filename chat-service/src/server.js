@@ -53,6 +53,7 @@ const connectToDb = async () => {
         });
     } catch (err) {
         console.log('Failed to create table: ', err.message);
+        process.exit(1);
     }
 }
 

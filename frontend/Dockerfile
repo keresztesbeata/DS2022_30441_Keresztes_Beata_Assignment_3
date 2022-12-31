@@ -2,7 +2,8 @@ FROM node:16.17.1 as builder
 WORKDIR /app
 COPY package*.json /app/
 
-ENV REACT_APP_HOST_IP_ADDRESS=20.218.202.217
+ENV BACKEND_HOST_IP=localhost
+ENV GRPC_HOST_IP=localhost
 
 RUN npm install
 COPY ./ /app/

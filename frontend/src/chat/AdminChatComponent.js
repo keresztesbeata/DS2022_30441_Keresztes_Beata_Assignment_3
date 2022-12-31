@@ -2,29 +2,18 @@ import React, {useState} from 'react'
 import {Button} from "react-bootstrap";
 import {ADMIN_ROLE} from "../common/auth/Authentication";
 import {SimpleChatComponent} from "./SimpleChatComponent";
-
-const CHAT_SERVICE_URL = "http://localhost:8081";
+import {mapMessage} from "./Utils";
+import {getGrpcAddress} from "../common/Utils";
 
 export const AdminChatComponent = () => {
     const {ChatServiceClient} = require("./chat_grpc_web_pb");
     const {User, ChatMessage, Empty} = require('./chat_pb.js');
-    const client = new ChatServiceClient(CHAT_SERVICE_URL, null, null);
+    const client = new ChatServiceClient(getGrpcAddress(), null, null);
 
     const [isTyping, setIsTyping] = useState([]);
     const [joined, setJoined] = useState(false);
     const [messages, setMessages] = useState([]);
     const [users, setUsers] = useState([]);
-
-    const mapMessage = (chatMessage) => {
-        const id = chatMessage.getId();
-        const from = chatMessage.getFrom();
-        const to = chatMessage.getTo();
-        const msg = chatMessage.getMsg();
-        const timestamp = chatMessage.getTimestamp();
-        const read = chatMessage.getRead();
-
-        return {id: id, from: from, to: to, msg: msg, timestamp: timestamp, read: read};
-    }
 
     const onMsgReceivedNotification = (response) => {
         if (response.getTo() === ADMIN_ROLE) {

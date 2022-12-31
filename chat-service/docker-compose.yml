@@ -35,3 +35,9 @@ services:
         limits:
           cpus: '0.10'
           memory: 1G
+          
+
+networks:
+  default:
+    name: ds2022_30441_keresztes_beata_assignment_3_default
+    external: true    

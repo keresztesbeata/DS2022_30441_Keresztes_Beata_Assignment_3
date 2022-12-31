@@ -1,9 +1,10 @@
 const grpc = require("grpc");
 const protoLoader = require("@grpc/proto-loader");
 const mysql = require("mysql2/promise");
-let config = require('./config.js');
+const config = require('./config.js');
 
 const PROTO_PATH = "src/chat.proto";
+
 const SERVER_URI = "0.0.0.0:9090";
 
 let clients = [];

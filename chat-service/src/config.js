@@ -1,4 +1,4 @@
-let config = {
+const config = {
     host    : 'mysql',
     user    : 'root',
     password: 'root',

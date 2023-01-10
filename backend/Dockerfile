@@ -3,6 +3,7 @@ FROM maven:3.8.1-openjdk-17 AS builder
 COPY ./src/ /root/src
 COPY ./pom.xml /root/
 COPY ./checkstyle.xml /root/
+COPY ./src/main/resources/keystore/* /root/
 
 WORKDIR /root
 RUN mvn package

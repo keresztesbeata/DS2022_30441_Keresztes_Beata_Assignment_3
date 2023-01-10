@@ -25,6 +25,7 @@ import static ds.measurements.Constants.*;
 public class MessageProducer {
 
     private String host;
+    private int port;
     private String deviceId;
     private int period;
     private String queueName;
@@ -41,6 +42,7 @@ public class MessageProducer {
         this.deviceId = deviceId;
         readProperties();
         connectionFactory.setHost(host);
+        connectionFactory.setPort(port);
         reader = new SensorReader(this.deviceId);
         initConnection();
     }
@@ -74,6 +76,7 @@ public class MessageProducer {
             prop.load(input);
             // get the properties value
             host = prop.getProperty("rabbitmqHost") != null ? prop.getProperty("rabbitmqHost") : DEFAULT_HOST;
+            port = prop.getProperty("rabbitmqPort") != null ? Integer.parseInt(prop.getProperty("rabbitmqPort")) : DEFAULT_PORT;
             queueName = prop.getProperty("queueName") != null ? prop.getProperty("queueName") : DEFAULT_QUEUE_NAME;
             exchangeName = prop.getProperty("exchangeName") != null ? prop.getProperty("exchangeName") : DEFAULT_EXCHANGE_NAME;
             period = prop.getProperty("sendingPeriod") != null ? Integer.parseInt(prop.getProperty("sendingPeriod")) : DEFAULT_PERIOD;

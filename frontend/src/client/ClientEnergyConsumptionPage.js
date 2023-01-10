@@ -153,7 +153,7 @@ export class ClientEnergyConsumptionPage extends Component {
                 notification: {
                     show: true,
                     type: WARNING,
-                    message: message.body,
+                    message: message.body.message,
                     fields: []
                 }
             }), {id: sessionStorage.getItem(USERNAME)});

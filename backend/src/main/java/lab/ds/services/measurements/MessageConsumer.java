@@ -3,10 +3,7 @@ package lab.ds.services.measurements;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.Delivery;
+import com.rabbitmq.client.*;
 import lab.ds.controllers.handlers.requests.EnergyConsumptionData;
 import lab.ds.dtos.DeviceDTO;
 import lab.ds.dtos.EnergyConsumptionDTO;
@@ -35,6 +32,9 @@ public class MessageConsumer {
     private Integer queueCapacity;
     @Value("${rabbitmq.host:localhost}")
     private String host;
+
+    @Value("${rabbitmq.port:5672}")
+    private int port;
     private Channel channel;
     private Connection connection;
     @Autowired
@@ -43,21 +43,37 @@ public class MessageConsumer {
     private DeviceService deviceService;
     @Autowired
     private NotificationDispatcher dispatcher;
+    private Consumer consumer;
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final ConnectionFactory connectionFactory = new ConnectionFactory();
     private Map<String, MeasurementData> devicesMeasurementsMap = new HashMap<>();
 
     public void connectToMessageQueue() {
         try {
-            connectionFactory.setHost(host);
-            connection = connectionFactory.newConnection();
-            channel = connection.createChannel();
-            // connect to the specified message queue
-            channel.queueDeclare(queueName, true, false, false, null);
-            log.info("Successfully connected to queue {}", queueName);
-            while (channel.isOpen()) {
-                channel.basicConsume(queueName, true, (consumerTag, delivery) -> deliverMessage(delivery), consumerTag -> {
-                });
+            if (channel == null) {
+                connectionFactory.setHost(host);
+                connectionFactory.setPort(port);
+                connection = connectionFactory.newConnection();
+                channel = connection.createChannel();
+                // connect to the specified message queue
+                channel.queueDeclare(queueName, true, false, false, null);
+                consumer = new DefaultConsumer(channel) {
+                    @Override
+                    public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                        super.handleDelivery(consumerTag, envelope, properties, body);
+                        deliverMessage(body);
+                    }
+
+                    @Override
+                    public void handleCancel(String consumerTag) throws IOException {
+                        // consumer has been cancelled unexpectedly
+                        channel.basicCancel(consumerTag);
+                    }
+                };
+                log.info("Successfully connected to queue {}", queueName);
+            }
+            if (channel.isOpen()) {
+                channel.basicConsume(queueName, consumer);
             }
         } catch (IOException e) {
             log.error("Failed to consume the message from the queue: {}", e.getMessage());
@@ -66,8 +82,8 @@ public class MessageConsumer {
         }
     }
 
-    private void deliverMessage(Delivery delivery) {
-        final String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
+    private void deliverMessage(byte[] body) {
+        final String message = new String(body, StandardCharsets.UTF_8);
         log.debug("Received message {} from queue {}", message, queueName);
         final EnergyConsumptionData energyConsumption = decodeMessage(message);
 

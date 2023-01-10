@@ -1,5 +1,5 @@
 FROM rabbitmq:3-management
 
 # Expose ports.
-EXPOSE 5672
-EXPOSE 15672
+EXPOSE 5673
+EXPOSE 15673

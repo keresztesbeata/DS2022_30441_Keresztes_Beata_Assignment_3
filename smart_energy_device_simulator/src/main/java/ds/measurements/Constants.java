@@ -7,4 +7,5 @@ public interface Constants {
     String DEFAULT_DEVICE_ID = "2565d8ee-5f68-40c2-9ccc-1d640432818c";
     int DEFAULT_PERIOD = 30;
     String DEFAULT_HOST = "localhost";
+    int DEFAULT_PORT = 5672;
 }

@@ -2,11 +2,11 @@ const BACKEND_HOST = process.env.BACKEND_HOST_IP !== undefined? process.env.BACK
 const GRPC_HOST = process.env.GRPC_HOST_IP !== undefined? process.env.GRPC_HOST_IP:'localhost';
 
 export function getServerAddress() {
-    return "http://"+BACKEND_HOST+":8080";
+    return "https://"+BACKEND_HOST+":8443";
 }
 
 export function getWebsocketAddress() {
-    return "ws://"+BACKEND_HOST+":8080/ws";
+    return "wss://"+BACKEND_HOST+":8443/ws";
 }
 
 export function getGrpcAddress() {

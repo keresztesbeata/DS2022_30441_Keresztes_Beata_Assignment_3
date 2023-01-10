@@ -25,4 +25,5 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.enableSimpleBroker(NOTIFICATIONS_ENDPOINT);
         registry.setApplicationDestinationPrefixes(APP_PREFIX);
     }
+
 }
